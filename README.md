@@ -6,27 +6,24 @@ Copyright (c) 2024 Snowflake Inc. All Rights Reserved.
 
 ## 目的
 データカタログアプリは、Snowflake データベースまたはスキーマに含まれる各テーブルの自然言語記述を生成し、生成した結果をデータカタログとして活用します。
-コメント生成機能ではチームメンバーが容易に検索、レビュー、修正、および検索ができます。（コメント生成の機能は[こちらのコード](https://github.com/Snowflake-Labs/sfguide-data-crawler)を参考に修正を行なっています。）
+コメント生成機能ではチームメンバーが容易に検索、レビュー、修正、および検索ができます。コメント生成の機能は[こちらのコード](https://github.com/Snowflake-Labs/sfguide-data-crawler)を参考に修正を行なっています。
 データカタログではテーブルの検索、LLM によるテーブルの詳細説明と分析アイデアの提示、マーケットプレイスで公開されている類似外部データの提示を行いユーザのデータ活用を促進します。
 
 ## Data
 LLM に渡されるプロンプトには、Snowflake テーブルのデータベース名、スキーマ名、テーブル名、カラム名、テーブルコメント (利用可能でユーザーが指定した場合)、およびテーブルデータのサンプルが含まれます。データベースまたはスキーマ内のテーブルをクロールできます。ユーザー指定のデータベースまたはスキーマをクロールする場合、ユーティリティを実行している現在のユーザーロールが読み取り可能なすべてのテーブルとビューが含まれます。テーブルの閲覧は、標準的な Snowflake ロールベースアクセス制御に従います。
 
-## AI Security
-Snowflake は、その AI 機能を強化する 3 種類の大規模言語モデル (LLM) をホストおよび/または管理しています。それは、Snowflake 独自の LLM、オープンソース LLM、およびライセンスされたプロプライエタリ LLM (総称して「LLM」) です。Snowflake の AI 機能は、データ保護、ガバナンス、およびセキュリティに関する Snowflake の標準的な責任共有モデルの対象となります。Snowflake は、お客様との信頼関係が基盤であることを理解しており、高水準のデータセキュリティとプライバシーを維持することに尽力しています。
-
 ## Cortex LLMs
-Snowflake Cortex を使用すると、Mistral、Meta、Google などの企業の研究者によってトレーニングされた、業界をリードする大規模言語モデル (LLM) にすぐにアクセスできます。また、Snowflake が特定のユースケース向けに微調整したモデルも提供しています。これらの LLM は Snowflake によって完全にホストおよび管理されているため、使用するためにセットアップは不要です。お客様のデータは Snowflake 内に保持され、期待されるパフォーマンス、拡張性、およびガバナンスが提供されます。
+Snowflake Cortex を使用すると、Claude、Mistral、Meta、Google などの業界をリードする大規模言語モデル (LLM) にすぐにアクセスできます。また、Snowflake が特定のユースケース向けに微調整したモデルも提供しています。これらの LLM は Snowflake によって完全にホストおよび管理されているため、使用するためのセットアップは不要です。お客様のデータは Snowflake 内に保持され、期待されるパフォーマンス、拡張性、およびガバナンスが提供されます。
 
 # 利用方法
 ## 環境のセットアップ
-SQL ファイル `setup.sql` を実行することで、Streamlit in Snowflake にデプロイされます。ファイルの内容は、Snowsight SQL ワークシートにコピー＆ペーストするか、Snowflake 拡張機能を備えた [VSCode](https://docs.snowflake.com/en/user-guide/vscode-ext)または[SnowCLI](https://docs.snowflake.com/en/developer-guide/snowflake-cli-v2/index)を介して実行できます。ファイルが実行されると、アプリケーションは Snowsight の Streamlit メニューから利用可能になります。
+SQL ファイル `setup.sql` を実行することで、Streamlit in Snowflake にデプロイされます。ファイルの内容は、Snowsight SQL ワークシートにコピー＆ペーストするか、Snowflake 拡張機能を備えた [VSCode](https://docs.snowflake.com/en/user-guide/vscode-ext) または [SnowCLI](https://docs.snowflake.com/en/developer-guide/snowflake-cli-v2/index) を介して実行できます。ファイルが実行されると、アプリケーションは Snowsight の Streamlit メニューから利用可能になります。
 
-## Calling
+## メタデータ作成のロジックについて
 必要なすべての関数とストアドプロシージャは、Snowflake の `DATA_CATALOG.TABLE_CATALOG` に登録されています。
 現在のユーザー/ロールが利用できる任意のデータベースまたはスキーマをクロールできます。
 
-Below is an example of calling the utility to crawl all tables and views in database `JSUMMER` schema `CATALOG`. Results will be written to table `DATA_CATALOG.TABLE_CATALOGTABLE_CATALOG`.
+`DATA_CATALOG.TABLE_CATALOGTABLE_CATALOG`.
 ```sql
 CALL DATA_CATALOG.TABLE_CATALOG.DATA_CATALOG(target_database => 'JSUMMER',
                                   catalog_database => 'DATA_CATALOG',
@@ -37,8 +34,6 @@ CALL DATA_CATALOG.TABLE_CATALOG.DATA_CATALOG(target_database => 'JSUMMER',
                                   update_comment => TRUE
                                   );
 ```
-
-> **Note:** Depending on your security practices, you may need to grant usage on the database, schema, and/or stored procedure to others.
 
 The stored procedure provides a number of parameters:
 | パラメータ        | 説明 |
@@ -59,7 +54,7 @@ catalog ページの画面     |manage ページの画面     | run ページの
 :--------------------:|:--------------------:|:-------------------------:
 ![](images/catalog.png)|![](images/manage.png)|![](images/run.png)
 
-The final script creates a simple Streamlit user interface, `Data Crawler` with 2 pages:
+３つのStreamlitのコードを用意しています。
 - `catalog`: テーブルの検索、LLM によるテーブルの詳細説明と分析アイデアの提示、マーケットプレイスで公開されている類似外部データの提示。
 - `manage`: テーブルの説明を検索、レビュー、および修正します。
 - `run`: 新しいデータベースまたはスキーマ (あるいはその両方) を指定してクロールします。

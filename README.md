@@ -34,7 +34,7 @@ CALL DATA_CATALOG.TABLE_CATALOG.DATA_CATALOG(target_database => 'JSUMMER',
                                   catalog_table => 'TABLE_CATALOG',
                                   target_schema => 'CATALOG',
                                   sampling_mode => 'fast', 
-                                  update_comment => FALSE
+                                  update_comment => TRUE
                                   );
 ```
 
@@ -63,6 +63,3 @@ The final script creates a simple Streamlit user interface, `Data Crawler` with 
 - `catalog`: テーブルの検索、LLM によるテーブルの詳細説明と分析アイデアの提示、マーケットプレイスで公開されている類似外部データの提示。
 - `manage`: テーブルの説明を検索、レビュー、および修正します。
 - `run`: 新しいデータベースまたはスキーマ (あるいはその両方) を指定してクロールします。
-
-## フィードバック
-フィードバックをお待ちしております。 yota.itagaki@snowflake.com までご連絡ください。

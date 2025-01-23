@@ -180,7 +180,7 @@ def get_cosine_similarity():
 ##########################開発中############################ 
 
 # データカタログタブの内容
-st.title("テーブルカタログアプリ ❄️")
+st.title("Snowflake データカタログ ❄️")
 
 # アプリケーションのタイトルとサブタイトルを設定
 st.subheader(f"ようこそ  :blue[{str(st.experimental_user.user_name)}] さん")

@@ -57,7 +57,7 @@ The stored procedure provides a number of parameters:
 ## Streamlit UI のイメージ
 catalog ページの画面     |manage ページの画面     | run ページの画面
 :--------------------:|:--------------------:|:-------------------------:
-![](images/manage.png)|![](images/manage.png)|![](images/run.png)
+![](images/catalog.png)|![](images/manage.png)|![](images/run.png)
 
 The final script creates a simple Streamlit user interface, `Data Crawler` with 2 pages:
 - `catalog`: テーブルの検索、LLM によるテーブルの詳細説明と分析アイデアの提示、マーケットプレイスで公開されている類似外部データの提示。

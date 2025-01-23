@@ -10,7 +10,7 @@ session = get_active_session()
 
 # ページ設定
 st.set_page_config(layout="wide", page_title="データカタログ", page_icon="🧮")
-st.title("Snowflake データカタログ ❄️")
+st.title("作成したコメントの管理")
 st.subheader("テーブルの説明を並べ替えて更新する")
 
 def get_dataset(table, columns=None):

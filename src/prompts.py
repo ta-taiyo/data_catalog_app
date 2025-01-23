@@ -26,7 +26,7 @@ start_prompt = """
                 {table_comment}
                 </table_comment>
                 <table_samples>
-                {{table_samples}}
+                {table_samples}
                 </table_samples>
                 <schema_tables>
                 {schema_tables}

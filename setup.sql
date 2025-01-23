@@ -96,7 +96,7 @@ CREATE OR REPLACE PROCEDURE DATA_CATALOG.TABLE_CATALOG.CATALOG_TABLE(
                                                           sampling_mode string DEFAULT 'fast', 
                                                           n integer DEFAULT 5,
                                                           model string DEFAULT 'claude-3-5-sonnet',
-                                                          update_comment boolean Default FALSE)
+                                                          update_comment boolean Default TRUE)
 RETURNS VARIANT
 LANGUAGE PYTHON
 RUNTIME_VERSION = '3.10'
@@ -112,11 +112,11 @@ CREATE OR REPLACE PROCEDURE DATA_CATALOG.TABLE_CATALOG.DATA_CATALOG(target_datab
                                                          target_schema string DEFAULT '',
                                                          include_tables ARRAY DEFAULT null,
                                                          exclude_tables ARRAY DEFAULT null,
-                                                         replace_catalog boolean DEFAULT FALSE,
+                                                         replace_catalog boolean DEFAULT TRUE,
                                                          sampling_mode string DEFAULT 'fast', 
                                                          update_comment boolean Default TRUE,
                                                          n integer DEFAULT 5,
-                                                         model string DEFAULT 'mistral-7b'
+                                                         model string DEFAULT 'claude-3-5-sonnet'
                                                          )
 RETURNS TABLE()
 LANGUAGE PYTHON

@@ -14,7 +14,6 @@ st.set_page_config(layout="wide")
 # 現在のSnowflakeセッションを取得
 session = get_active_session()
 
-
 # データベース一覧を取得する関数（キャッシュ付き）
 @st.cache_data
 def get_databases():
@@ -26,11 +25,70 @@ def get_databases():
         order by 1
     """).toPandas())
 
+@st.cache_data()
+def get_table_stats(database_name, schema_name, table_name):
+    """テーブルの統計情報を取得する関数"""
+    try:
+        stats = session.sql(f"""
+            SELECT 
+                'Last Updated' as metric,
+                TO_CHAR(MAX(LAST_ALTERED), 'YYYY-MM-DD HH24:MI:SS') as value
+            FROM {database_name}.information_schema.tables 
+            WHERE table_name = '{table_name}'
+            AND table_schema = '{schema_name}'
+            UNION ALL
+            SELECT 
+                'Created On',
+                TO_CHAR(MIN(CREATED), 'YYYY-MM-DD HH24:MI:SS')
+            FROM {database_name}.information_schema.tables 
+            WHERE table_name = '{table_name}'
+            AND table_schema = '{schema_name}'
+            UNION ALL
+            SELECT 
+                'Storage Size (Bytes)',
+                TO_CHAR(SUM(bytes), '999,999,999,999')
+            FROM {database_name}.information_schema.tables 
+            WHERE table_name = '{table_name}'
+            AND table_schema = '{schema_name}'
+        """)
+        return stats.toPandas()
+    except Exception as e:
+        st.error(f"統計情報の取得中にエラーが発生しました: {str(e)}")
+        return pd.DataFrame()
+
 # テーブルカタログを取得する関数
 # @st.cache_data()
 def get_table_catalog(databasename):
     df = session.sql ("SELECT distinct COMMENT, table_catalog, table_schema, table_name, table_owner, row_count FROM " + databasename + ".information_schema.tables where table_schema !='INFORMATION_SCHEMA'")
     return df.toPandas()
+
+# アクセスログを取得する関数を追加
+@st.cache_data()
+def get_table_access_count(database_name):
+    """各テーブルのアクセス回数を集計する関数"""
+    try:
+        access_counts = session.sql(f"""
+            WITH parsed_objects AS (
+                SELECT 
+                    query_id,
+                    f.value:objectDomain::STRING as obj_domain,
+                    f.value:objectName::STRING as obj_name
+                FROM SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY,
+                TABLE(FLATTEN(direct_objects_accessed)) f
+                WHERE QUERY_START_TIME >= DATEADD(month, -1, CURRENT_TIMESTAMP())
+            )
+            SELECT 
+                obj_name as TABLE_FULL_NAME,
+                COUNT(DISTINCT query_id) as ACCESS_COUNT
+            FROM parsed_objects
+            WHERE obj_domain = 'Table'
+            AND CONTAINS(obj_name, '{database_name}')
+            GROUP BY obj_name
+        """).toPandas()
+        return access_counts
+    except Exception as e:
+        st.error(f"アクセス統計の取得中にエラーが発生しました: {str(e)}")
+        return pd.DataFrame(columns=['TABLE_FULL_NAME', 'ACCESS_COUNT'])
 
 # テーブルの行数を取得する関数（キャッシュ付き）
 @st.cache_data()
@@ -57,7 +115,6 @@ def get_useraccess(tablename):
 def get_sensitive_column(databasename, tablename):
     df = session.sql("select COLUMN_NAME, TAG_NAME, TAG_VALUE from snowflake.account_usage.tag_references where OBJECT_DATABASE = '" + databasename + "' and OBJECT_NAME ='" + tablename + "'")
     return df.toPandas()
-
 
 # Complete関数の実行
 def get_response(session, prompt):
@@ -88,7 +145,6 @@ def get_system_prompt(table_name, column_data):
     table_context = get_table_context(table_name = table_name, column_data = column_data)
     return GEN_SQL.format(context=table_context)
 
-
 GEN_SQL = """
 あなたはSnowflake SQL エキスパートとして行動します。質問の回答は日本語でお願いします。
 テーブルが与えられるので、テーブル名は <tableName> タグ内にあり、列は <columns> タグ内にあるので確認してください。
@@ -108,7 +164,6 @@ def get_cosine_similarity():
     「詳細」ボタンを押したテーブルのデータ取得
     ２つのテーブルを VECTOR_COSINE_SIMILARITYで類似度検索
     """
-
     search_results = session.sql(f"""
         SELECT 
             market.TITLE, 
@@ -124,12 +179,11 @@ def get_cosine_similarity():
     return search_results
 ##########################開発中############################ 
 
-
 # データカタログタブの内容
 st.title("テーブルカタログアプリ ❄️")
 
 # アプリケーションのタイトルとサブタイトルを設定
-st.subheader (f"ようこそ  :blue[{str(st.experimental_user.user_name)}] さん")
+st.subheader(f"ようこそ  :blue[{str(st.experimental_user.user_name)}] さん")
 
 # データベース選択ドロップダウン
 df_databases = get_databases()
@@ -139,8 +193,9 @@ if not '<Select>' in filter_database:
     database_name = filter_database.split(' ')[0].replace('(','').replace(')','')
     
     with st.spinner('テーブルデータを分析中'):
-        # テーブルカタログを取得
+        # テーブルカタログとアクセス統計を取得
         table_catalog = get_table_catalog(database_name)
+        access_counts = get_table_access_count(database_name)
         
         # 4列レイアウトでテーブルを表示
         col1, col2, col3, col4 = st.columns(4)
@@ -149,31 +204,63 @@ if not '<Select>' in filter_database:
             current_col = [col1, col2, col3, col4][index % 4]
             with current_col:
                 with st.expander("**"+row['TABLE_NAME']+"**", expanded=True):
-                    st.write(row['COMMENT'])
-                    key_details = f"{row['TABLE_CATALOG']}.{row['TABLE_SCHEMA']}.{row['TABLE_NAME']}"
+                    # テーブルの完全な名前を作成
+                    full_table_name = f"{row['TABLE_CATALOG']}.{row['TABLE_SCHEMA']}.{row['TABLE_NAME']}"
                     
-                    # 詳細ボタン
+                    # アクセス回数を取得
+                    access_count = access_counts[
+                        access_counts['TABLE_FULL_NAME'] == full_table_name
+                    ]['ACCESS_COUNT'].values[0] if not access_counts.empty and full_table_name in access_counts['TABLE_FULL_NAME'].values else 0
+                    
+                    # テーブル情報とアクセス数を表示
+                    st.write(row['COMMENT'])
+                    
+                    # アクセス数の表示をカスタマイズ
+                    st.markdown(
+                        f"""
+                        <div style='
+                            background-color: #eef1f6;
+                            padding: 8px 15px;
+                            border-radius: 5px;
+                            margin: 10px 0;
+                            display: inline-block;
+                            border: 1px solid #e0e4eb;
+                        '>
+                            <span style='font-size: 0.9em; color: #666;'>👥 過去30日間のアクセス数:</span>
+                            <span style='font-size: 1.1em; font-weight: bold; margin-left: 8px; color: #2c3e50;'>{access_count}</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    
+                    key_details = full_table_name
                     get_data_details = st.button("詳細", key=key_details, type="primary")
                     
-            
             # 詳細情報の表示
             if get_data_details:
                 st.session_state.messages = []
                 
                 count_rows = get_count(key_details)
-                table_name = ".".join(re.findall(r'[^.]+', key_details)[-1:])
-                database_name = key_details.split('.')[0]
+                table_parts = key_details.split('.')
+                database_name = table_parts[0]
+                schema_name = table_parts[1]
+                table_name = table_parts[2]
 
                 # テーブルの概要表示
                 with st.expander(str(key_details) + " の概要", expanded=True):                    
                     # 行数表示
                     st.success("レコード数 : " + str(count_rows))
 
+                    # テーブル統計情報の表示
+                    st.info("📊 テーブル統計情報")
+                    stats_df = get_table_stats(database_name, schema_name, table_name)
+                    if not stats_df.empty:
+                        st.dataframe(stats_df, use_container_width=True)
+
                     # テーブルのPreview
                     st.info("テーブル内のカラム名と説明")
                     sql = session.sql(f"select * from {key_details} limit 10")
                     st.write(sql)
-                    
 
                 # LLM を使った分析
                 with st.expander("LLMを使ったテーブルの詳細分析"):
@@ -181,15 +268,11 @@ if not '<Select>' in filter_database:
                     prompt = get_system_prompt(table_name, column_data)
                     st.session_state.messages.append({"role": 'user', "content": prompt})
 
-                    # st.write(prompt)
                     response = get_response(session, st.session_state.messages)
                     st.session_state.messages.append({"role": "assistant", "content": response})
                     st.markdown(response)
 
-##########################開発中############################ 
                 # マケプレデータとの類似検索
                 with st.expander("マーケットプレイスで役立ちそうなデータ上位10件"):
                     results = get_cosine_similarity()
                     st.dataframe(results)
-                    
-##########################開発中############################ 

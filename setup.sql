@@ -94,7 +94,7 @@ CREATE OR REPLACE PROCEDURE DATA_CATALOG.TABLE_CATALOG.CATALOG_TABLE(
                                                           prompt string,
                                                           sampling_mode string DEFAULT 'fast', 
                                                           n integer DEFAULT 5,
-                                                          model string DEFAULT 'llama3.2-1b',
+                                                          model string DEFAULT 'claude-3-5-sonnet',
                                                           update_comment boolean Default TRUE)
 RETURNS VARIANT
 LANGUAGE PYTHON
@@ -115,7 +115,7 @@ CREATE OR REPLACE PROCEDURE DATA_CATALOG.TABLE_CATALOG.DATA_CATALOG(target_datab
                                                          sampling_mode string DEFAULT 'fast', 
                                                          update_comment boolean Default TRUE,
                                                          n integer DEFAULT 5,
-                                                         model string DEFAULT 'llama3.2-1b'
+                                                         model string DEFAULT 'claude-3-5-sonnet'
                                                          )
 RETURNS TABLE()
 LANGUAGE PYTHON

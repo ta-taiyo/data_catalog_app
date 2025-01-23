@@ -225,6 +225,7 @@ from snowflake.snowpark.context import get_active_session
 # Get the current credentials
 session = get_active_session()
 models = [
+    'claude-3-5-sonnet',
     'llama3.2-1b',
     'llama3.2-3b',
     'llama3.1-8b',

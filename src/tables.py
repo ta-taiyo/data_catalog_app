@@ -101,7 +101,7 @@ def run_complete(session, tablename, model, sampling_mode, n, prompt, temperatur
     try:
         # プロンプトの中の波括弧をエスケープしてSQL変換エラーを防ぐ
         prompt = textwrap.dedent(prompt.format(table_samples = samples))
-        
+        print(prompt)
         # temperatureが有効な値の場合はSQL経由で実行
         if isinstance(temperature, float):
             if temperature > 0 and temperature < 1: 

@@ -494,7 +494,7 @@ def add_records_to_catalog(session,
                            catalog_schema,
                            catalog_table,
                            new_df,
-                           replace_catalog = False):
+                           replace_catalog = True):
     
     if replace_catalog:
         current_df = session.table(f'{catalog_database}.{catalog_schema}.{catalog_table}')

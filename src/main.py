@@ -229,7 +229,7 @@ def run_table_catalog(session,
         df = session.create_dataframe(pd.DataFrame.from_records(results))\
                     .withColumn('EMBEDDINGS',
                                 F.call_udf('SNOWFLAKE.CORTEX.EMBED_TEXT_1024',
-                                           'voyage-multilingual-2',
+                                           'multilingual-e5-large',
                                            F.col('DESCRIPTION')))\
                     .withColumn('CREATED_ON', F.current_timestamp())
         

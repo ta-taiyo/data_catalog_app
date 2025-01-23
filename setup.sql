@@ -9,7 +9,7 @@ CREATE OR REPLACE TABLE DATA_CATALOG.TABLE_CATALOG.TABLE_CATALOG (
   TABLENAME VARCHAR
   ,DESCRIPTION VARCHAR
   ,CREATED_ON TIMESTAMP
-  ,EMBEDDINGS VECTOR(FLOAT, 1024)
+  ,EMBEDDINGS VECTOR(FLOAT, 768)
   );
 
 /*** マーケットプレイスデータ一覧のEmbeddingを作成 ***/
@@ -33,7 +33,7 @@ CREATE OR REPLACE TABLE marketplace_embedding_listings AS
 SELECT 
     title,
     description,
-    SNOWFLAKE.CORTEX.EMBED_TEXT_1024('voyage-multilingual-2', description) AS embeddings
+    SNOWFLAKE.CORTEX.EMBED_TEXT_768('voyage-multilingual-2', description) AS embeddings
 FROM temp_embedding_listings;
 
 -- SELECT * FROM marketplace_embedding_listings LIMIT 10;
@@ -94,7 +94,7 @@ CREATE OR REPLACE PROCEDURE DATA_CATALOG.TABLE_CATALOG.CATALOG_TABLE(
                                                           prompt string,
                                                           sampling_mode string DEFAULT 'fast', 
                                                           n integer DEFAULT 5,
-                                                          model string DEFAULT 'claude-3-5-sonnet',
+                                                          model string DEFAULT 'llama3.2-1b',
                                                           update_comment boolean Default TRUE)
 RETURNS VARIANT
 LANGUAGE PYTHON
@@ -115,7 +115,7 @@ CREATE OR REPLACE PROCEDURE DATA_CATALOG.TABLE_CATALOG.DATA_CATALOG(target_datab
                                                          sampling_mode string DEFAULT 'fast', 
                                                          update_comment boolean Default TRUE,
                                                          n integer DEFAULT 5,
-                                                         model string DEFAULT 'claude-3-5-sonnet'
+                                                         model string DEFAULT 'llama3.2-1b'
                                                          )
 RETURNS TABLE()
 LANGUAGE PYTHON

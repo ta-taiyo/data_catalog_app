@@ -227,7 +227,7 @@ def add_records_to_catalog(session,
                            catalog_schema,
                            catalog_table,
                            new_df,
-                           replace_catalog = True):
+                           replace_catalog = False):
     """カタログにレコードを追加または更新する関数"""
     
     if replace_catalog:

@@ -53,7 +53,7 @@ CREATE OR REPLACE API INTEGRATION git_api_integration_itagaki
 -- Create Git Repository
 CREATE OR REPLACE GIT REPOSITORY DATA_CATALOG.TABLE_CATALOG.git_data_crawler_itagaki
   API_INTEGRATION = git_api_integration_itagaki
-  ORIGIN = 'https://github.com/ta-taiyo/data-crawler-app';
+  ORIGIN = 'https://github.com/ta-taiyo/data_catalog_app.git';
 
 ALTER GIT REPOSITORY DATA_CATALOG.TABLE_CATALOG.git_data_crawler_itagaki FETCH;
 
@@ -112,7 +112,7 @@ CREATE OR REPLACE PROCEDURE DATA_CATALOG.TABLE_CATALOG.DATA_CATALOG(target_datab
                                                          target_schema string DEFAULT '',
                                                          include_tables ARRAY DEFAULT null,
                                                          exclude_tables ARRAY DEFAULT null,
-                                                         replace_catalog boolean DEFAULT TRUE,
+                                                         replace_catalog boolean DEFAULT FALSE,
                                                          sampling_mode string DEFAULT 'fast', 
                                                          update_comment boolean Default TRUE,
                                                          n integer DEFAULT 5,

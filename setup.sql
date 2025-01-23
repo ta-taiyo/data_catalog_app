@@ -1,5 +1,4 @@
 /*** 環境準備 ***/
-
 SET (streamlit_warehouse)=(SELECT CURRENT_WAREHOUSE());
 
 CREATE OR REPLACE DATABASE DATA_CATALOG;

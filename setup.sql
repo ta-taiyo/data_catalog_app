@@ -9,7 +9,7 @@ CREATE OR REPLACE TABLE DATA_CATALOG.TABLE_CATALOG.TABLE_CATALOG (
   TABLENAME VARCHAR
   ,DESCRIPTION VARCHAR
   ,CREATED_ON TIMESTAMP
-  ,EMBEDDINGS VECTOR(FLOAT, 768)
+  ,EMBEDDINGS VECTOR(FLOAT, 1024)
   );
 
 /*** マーケットプレイスデータ一覧のEmbeddingを作成 ***/
@@ -33,7 +33,7 @@ CREATE OR REPLACE TABLE marketplace_embedding_listings AS
 SELECT 
     title,
     description,
-    SNOWFLAKE.CORTEX.EMBED_TEXT_768('voyage-multilingual-2', description) AS embeddings
+    SNOWFLAKE.CORTEX.EMBED_TEXT_1024('voyage-multilingual-2', description) AS embeddings
 FROM temp_embedding_listings;
 
 -- SELECT * FROM marketplace_embedding_listings LIMIT 10;
